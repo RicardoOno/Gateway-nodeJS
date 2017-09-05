@@ -1,0 +1,14 @@
+100 Conexão continuada
+
+200
+201 Sucesso
+
+301 Redirecionamento
+302
+
+400 Bad request
+403
+404 Not Found
+
+500 Erro interno do servidor
+503
