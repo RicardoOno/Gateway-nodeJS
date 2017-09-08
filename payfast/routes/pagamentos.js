@@ -72,14 +72,14 @@ module.exports = function (app) {
             return;
         }
 
-       console.log('====> /pagamentos/pagamento <====');
-       var pagamento = req.body["pagamento"];
-       console.log('=====> Procesando uma requisição nova <=====');
+        console.log('====> /pagamentos/pagamento <====');
+        var pagamento = req.body["pagamento"];
+        console.log('=====> Procesando uma requisição nova <=====');
 
-       pagamento.status = 'CRIADO';
-       pagamento.data = new Date();
+        pagamento.status = 'CRIADO';
+        pagamento.data = new Date();
 
-       //curl http://localhost:3000/pagamentos/pagamento -X POST -v -H "Content-type: application/json" -d @files/pagamentos.json
+        //curl http://localhost:3000/pagamentos/pagamento -X POST -v -H "Content-type: application/json" -d @files/pagamentos.json
 
         var connection = app.infra.connectionFactory(); //Por causa do CONSIGN, eu consigo andar pelas pastas.
         var pagamentoDAO = new app.infra.PagamentosDAO(connection);
@@ -96,54 +96,87 @@ module.exports = function (app) {
                     var cartao = req.body["cartao"];
                     console.log(cartao);
 
-                    var cartoesClient = new app.servicos.CartoesClient();
+                    var clienteCartoes = new app.services.clienteCartoes();
 
-                    res.status(201).json(cartao);
-                    return;
-                } el
+                    clienteCartoes.autoriza(cartao,
+                        function (exception, request, response, retorno) {
+                            if(exception) {
+                                console.log(exception);
 
-                res.location('/pagamentos/pagamento/' + pagamento.id);
+                                res.status(400).send(exception);
+                                return;
+                            }
 
-                //LINK + VERBO + METODO = HATEOAS (Hypermedia As The .....)
-                var response = {
-                    dados_do_pagamento: pagamento,
-                    links: [
-                        {
-                            href: "http://localhost:3000/pagamentos/pagamento/"
-                                    + pagamento.id,
-                            rel: "confirmar",
-                            method: "PUT"
-                        },
-                        {
-                            href: "http://localhost:3000/pagamentos/pagamento/"
-                                    + pagamento.id,
-                            rel: "cancelar",
-                            method: "DELETE"
-                        }
-                    ]
-                };
+                            console.log(retorno);
+                            res.location('/pagamentos/pagamento/' + pagamento.id);
+                            var response = {
+                                dados_do_pagamento: pagamento,
+                                cartao: retorno,
+                                links: [
+                                    {
+                                        href: "http://localhost:3000/pagamentos/pagamento/"
+                                        + pagamento.id,
+                                        rel: "confirmar",
+                                        method: "PUT"
+                                    },
+                                    {
+                                        href: "http://localhost:3000/pagamentos/pagamento/"
+                                        + pagamento.id,
+                                        rel: "cancelar",
+                                        method: "DELETE"
+                                    }
+                                ]
+                            };
 
-                res.status(201).json(response); //formata a saida
+                            res.status(201).json(response);
+                            return;
+
+                        });
+
+                } else {
+                    res.location('/pagamentos/pagamento/' + pagamento.id);
+
+                    //LINK + VERBO + METODO = HATEOAS (Hypermedia As The .....)
+                    var response = {
+                        dados_do_pagamento: pagamento,
+                        links: [
+                            {
+                                href: "http://localhost:3000/pagamentos/pagamento/"
+                                + pagamento.id,
+                                rel: "confirmar",
+                                method: "PUT"
+                            },
+                            {
+                                href: "http://localhost:3000/pagamentos/pagamento/"
+                                + pagamento.id,
+                                rel: "cancelar",
+                                method: "DELETE"
+                            }
+                        ]
+                    };
+
+                    res.status(201).json(response); //formata a saida
+                }
             }
         });
 
         //res.send(pagamento);
-       /*Para testar via POST:
-        [terminal bash]
-        curl http://localhost:3000/pagamentos/pagamento -X POST
-        or
-        curl http://localhost:3000/pagamentos/pagamento -X POST -v
-        or
-        curl http://localhost:3000/pagamentos/pagamento -X POST; echo
-        or
-        curl http://localhost:3000/pagamentos/pagamento -X POST -v -H "Content-type: application/json" -d
-            '{
-                "forma_de_pagamento":"payfast",
-                "valor":10.98,
-                "moeda":"BRL",
-                "descricao":"criando um pagamento"
-            }'; echo
-        */
+        /*Para testar via POST:
+         [terminal bash]
+         curl http://localhost:3000/pagamentos/pagamento -X POST
+         or
+         curl http://localhost:3000/pagamentos/pagamento -X POST -v
+         or
+         curl http://localhost:3000/pagamentos/pagamento -X POST; echo
+         or
+         curl http://localhost:3000/pagamentos/pagamento -X POST -v -H "Content-type: application/json" -d
+         '{
+         "forma_de_pagamento":"payfast",
+         "valor":10.98,
+         "moeda":"BRL",
+         "descricao":"criando um pagamento"
+         }'; echo
+         */
 
     });
 

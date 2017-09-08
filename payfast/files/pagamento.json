@@ -1,6 +1,6 @@
 {
   "pagamento": {
-    "forma_de_pagamento": "payfast",
+    "forma_de_pagamento": "cartao",
     "valor": 89.98,
     "moeda": "USD",
     "descricao": "criando um pagamento"
